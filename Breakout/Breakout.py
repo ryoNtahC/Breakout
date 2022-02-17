@@ -1,92 +1,119 @@
-import pyglet
-import random
-import pyglet.gl
-from pyglet import gl
+import pygame
+from pygame.locals import *
 
-SIRKA = 1000
-VYSKA = 700
+pygame.init()
 
-#lopta
-VELKOST_LOPTY = 20
-RYCHLOST = 200
+šírka_obrazovky = 1280
+výška_obrazovky = 720
 
-#palky
-TLSTKA_PALKY = 70
-VYSKA_PALKY = 10
-RYCHLOST_PALKY = RYCHLOST * 1.5
+screen = pygame.display.set_mode((šírka_obrazovky, výška_obrazovky))
+pygame.display.set_caption('Breakout')
 
-#font
-VELKOST_FONTU = 42
-ODSADENIE_TEXTU = 30
+font = pygame.font.SysFont('Times New Roman', 30)
 
-#stavove premenne
-pozicie_palok = [50,10]
-pozicia_lopty = [SIRKA//2, VYSKA//2]
-rychlost_lopty = [0, 0]
-stisknutie_klaves = set()
-skore = [0, 0]
+# Farby
+pozadie = (255, 255, 255)
+block_blue = (65 ,105 ,225)
+block_green = (60 ,179 ,113)
+block_red = (220,20,60)
+farba_palky = (142, 135, 123)
+palka_obtiahnutie = (0, 0, 0)
+text_farba = (78, 81, 139)
 
-def vykresli_obdlznik(x1,y1,x2,y2):
-    gl.glBegin(gl.GL_TRIANGLE_FAN)
-    gl.glVertex2f(int(x1), int(y1))
-    gl.glVertex2f(int(x1), int(y2))
-    gl.glVertex2f(int(x2), int(y2))
-    gl.glVertex2f(int(x2), int(y1))
-    gl.glEnd()
+# Premenné
+stĺpce = 6
+riadky = 6
+clock = pygame.time.Clock()
+fps = 60
+smrť = False
+game_over = 0
 
-def nakresli_text(text, x, y, pozice_x):
-    napis = pyglet.text.Label(text,font_size=VELKOST_FONTU,x=x,y=y,anchor_x=pozice_x)
-    napis.draw()
+obtiažnosť=input("Zadaj akú chceš obtiažnosť (ľahká,stredná,tažká):")
 
-def vykresli():
-    gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-    gl.glColor3f(1, 1, 1)
+if obtiažnosť == "ľahká":
 
-    # vykresli loptu
-    vykresli_obdlznik(
-        pozicia_lopty[0] - VELKOST_LOPTY // 2,
-        pozicia_lopty[1] - VELKOST_LOPTY // 2,
-        pozicia_lopty[0] + VELKOST_LOPTY // 2,
-        pozicia_lopty[1] + VELKOST_LOPTY // 2
-
-    )
-    gl.glColor3f(255, 255, 255)
-    vykresli_obdlznik(pozicia_lopty[0], pozicia_lopty[1], pozicia_lopty[0] + 10, pozicia_lopty[1] + 10)
+    def draw_text(text, font, text_farba, x, y):
+        img = font.render(text, True, text_farba)
+        screen.blit(img, (x, y))
 
 
-    #vykresli palku
-    for x, y in [(-1000,-1000), (500,10)]:
-        vykresli_obdlznik(
-            x - TLSTKA_PALKY,
-            y - VYSKA_PALKY //2,
-            x + TLSTKA_PALKY,
-            y + VYSKA_PALKY //2
+    class wall():
+        def __init__(self):
+            self.šírka = šírka_obrazovky // stĺpce
+            self.výška = 50
 
-    )
+        def create_wall(self):
+            self.blocks = []
+            block_individual = []
+            for riadok in range(riadky):
+                block_riadky = []
+                for stĺpec in range(stĺpce):
+                    block_x = stĺpec * self.šírka
+                    block_y = riadok * self.výška
+                    rect = pygame.Rect(block_x, block_y, self.šírka, self.výška)
+                    if riadok < 6:
+                        sila = 1
+                    block_individual = [rect, sila]
+                    block_riadky.append(block_individual)
+                self.blocks.append(block_riadky)
 
-    # farebne bricky
-    gl.glColor3f(255,0,255)
-    brick1 = vykresli_obdlznik(208, 600, 20, 550)
-
-    gl.glColor3f(0, 0, 255)
-    brick2 = vykresli_obdlznik(401, 600, 213, 550)
-
-    gl.glColor3f(255, 0, 0)
-    brick3 = vykresli_obdlznik(594, 600, 406, 550)
-
-    gl.glColor3f(0, 255, 0)
-    brick4 = vykresli_obdlznik(787, 600, 599, 550)
-
-    gl.glColor3f(255, 255, 0)
-    brick5 = vykresli_obdlznik(980, 600, 792, 550)
-
-    #vykresli skore
-    score=nakresli_text(str(skore[0]),x=ODSADENIE_TEXTU,y = VYSKA- ODSADENIE_TEXTU - VELKOST_FONTU,pozice_x='left')
+        def draw_wall(self):
+            for riadok in self.blocks:
+                for block in riadok:
+                    # farby a životy blockov
+                    if block[1] == 3:
+                        block_stĺpec = block_red
+                    elif block[1] == 2:
+                        block_stĺpec = block_green
+                    elif block[1] == 1:
+                        block_stĺpec = block_blue
+                    pygame.draw.rect(screen, block_stĺpec, block[0])
+                    pygame.draw.rect(screen, pozadie, (block[0]), 2)
 
 
-window = pyglet.window.Window(width=SIRKA, height=VYSKA)
-window.push_handlers(
-    on_draw=vykresli
-)
+    class paddle():
+        def __init__(self):
+            self.reset()
 
-pyglet.app.run()
+        def move(self):
+            self.smer = 0
+            key = pygame.key.get_pressed()
+            if key[pygame.K_LEFT] and self.rect.left > 0:
+                self.rect.x -= self.speed
+                self.smer = -1
+            if key[pygame.K_RIGHT] and self.rect.right < šírka_obrazovky:
+                self.rect.x += self.speed
+                self.smer = 1
+
+        def draw(self):
+            pygame.draw.rect(screen, farba_palky, self.rect)
+            pygame.draw.rect(screen, palka_obtiahnutie, self.rect, 3)
+
+        def reset(self):
+            self.výška = 20
+            self.šírka = int(šírka_obrazovky / stĺpce)
+            self.x = int((šírka_obrazovky / 2) - (self.šírka / 2))
+            self.y = výška_obrazovky - (self.výška * 2)
+            self.speed = 10
+            self.rect = Rect(self.x, self.y, self.šírka, self.výška)
+            self.smer = 0
+
+
+    wall = wall()
+    wall.create_wall()
+    pálka = paddle()
+
+    run = True
+    while run:
+
+        clock.tick(fps)
+
+        screen.fill(pozadie)
+
+        # draw všetkých objektov
+        wall.draw_wall()
+        pálka.draw()
+
+        pygame.display.update()
+
+    pygame.quit()
