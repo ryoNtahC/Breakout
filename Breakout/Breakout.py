@@ -1,5 +1,7 @@
 import pygame
 from pygame.locals import *
+from pygame import mixer
+import random
 
 obtiažnosť=input("Zadaj akú chceš obtiažnosť (ľahká,stredná,tažká):")
 
@@ -16,9 +18,9 @@ if obtiažnosť == "ľahká":
 
     # Farby
     pozadie = (255, 255, 255)
-    block_blue = (65 ,105 ,225)
-    block_green = (60 ,179 ,113)
-    block_red = (220,20,60)
+    block_blue = (65, 105, 225)
+    block_green = (60, 179, 113)
+    block_red = (220, 20, 60)
     farba_palky = (142, 135, 123)
     palka_obtiahnutie = (0, 0, 0)
     text_farba = (78, 81, 139)
@@ -31,6 +33,16 @@ if obtiažnosť == "ľahká":
     smrť = False
     game_over = 0
 
+    hudbička = random.randrange(0, 3)
+    if hudbička == 0:
+        mixer.music.load("Bangers/Easy/1.wav")
+        mixer.music.play(-1)
+    elif hudbička == 1:
+        mixer.music.load("Bangers/Easy/2.wav")
+        mixer.music.play(-1)
+    elif hudbička == 2:
+        mixer.music.load("Bangers/Easy/3.wav")
+        mixer.music.play(-1)
 
     def draw_text(text, font, text_farba, x, y):
         img = font.render(text, True, text_farba)
@@ -97,6 +109,7 @@ if obtiažnosť == "ľahká":
             self.speed = 10
             self.rect = Rect(self.x, self.y, self.šírka, self.výška)
             self.smer = 0
+
 
     class game_ball():
         def __init__(self, x, y):
@@ -183,8 +196,12 @@ if obtiažnosť == "ľahká":
 
     wall = wall()
     wall.create_wall()
+
     pálka = paddle()
+
     lopta = game_ball(pálka.x + (pálka.šírka // 2), pálka.y - pálka.výška)
+
+
 
     run = True
     while run:
@@ -198,6 +215,40 @@ if obtiažnosť == "ľahká":
         pálka.draw()
         lopta.draw()
 
+        if smrť:
+            # vykreslenie palky
+            pálka.move()
+            # vykreslenie lopty
+            game_over = lopta.move()
+            if game_over != 0:
+                smrť = False
+
+        #text
+        if not smrť:
+            if game_over == 0:
+                draw_text('Klikni aby si spustil hru', font, text_farba, 500, výška_obrazovky // 2 + 100)
+            elif game_over == 1:
+                draw_text('Gratulujem vyhral si!', font, text_farba, 500, výška_obrazovky // 2 + 50)
+                draw_text('Klikni aby si začal novú hru', font, text_farba, 450, výška_obrazovky // 2 + 100)
+            elif game_over == -1:
+                draw_text('Prehral si!', font, text_farba, 580, výška_obrazovky // 2 + 50)
+                draw_text('Klikni aby si to skúsil znova', font, text_farba, 490, výška_obrazovky // 2 + 100)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.MOUSEBUTTONDOWN and smrť == False:
+                smrť = True
+                lopta.reset(pálka.x + (pálka.šírka // 2), pálka.y - pálka.výška)
+                pálka.reset()
+                wall.create_wall()
+
+
+
         pygame.display.update()
 
     pygame.quit()
+
+elif obtiažnosť == "stredná":
+
+elif obtiažnosť == "ťažká":
