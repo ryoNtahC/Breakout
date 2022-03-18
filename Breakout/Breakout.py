@@ -678,16 +678,21 @@ while run:
                                     draw_text('Klikni aby si spustil hru', font, text_farba, 500,
                                               výška_obrazovky // 2 + 100)
                                 elif game_over == 1:
+                                    import sys
+
+                                    import pygame
+                                    from pygame.locals import *
+                                    from pygame import mixer
+                                    import random
+
                                     pygame.init()
 
                                     šírka_obrazovky = 1280
                                     výška_obrazovky = 720
 
                                     screen = pygame.display.set_mode((šírka_obrazovky, výška_obrazovky))
-                                    pygame.display.set_caption('Victory')
+                                    pygame.display.set_caption('Ďakujem Kronosovi za play test :)')
                                     font = pygame.font.SysFont('Times New Roman', 45)
-                                    mixer.music.load("Bangers/Hard/Victory.wav")
-                                    mixer.music.play(-1)
 
                                     text = font.render("Gratulujem vyhral si!!", True, (255, 255, 255))
 
