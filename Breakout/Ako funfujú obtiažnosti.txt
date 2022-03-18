@@ -1,8 +1,0 @@
-Hra Breakout
-
-Po spustení hry do konzoly napišeťe obtiažnosť:
-
-ľahká: 6 riadkov a stĺpcov každý ma jeden život.
-stredná: 6 riadkov a stĺpcov 1.-3. majú jeden život 4.-6. majú dva životy.
-ťažká: 6 riadkov a stĺpcov. 1. a 2. majú jeden život, 3. a 4. majú dva životy a 5. a 6. majú tri životy.
-
